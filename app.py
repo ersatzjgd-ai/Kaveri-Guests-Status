@@ -22,41 +22,53 @@ custom_css = """
         top: 0;
         left: 0;
         width: 100%;
-        background-color: rgba(255, 255, 255, 0.95);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        background-color: rgba(30, 30, 30, 0.95); /* Darkened for better contrast with bright pills */
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         z-index: 1000;
-        padding: 10px 0;
+        padding: 12px 0;
         display: flex;
         justify-content: center;
-        gap: 20px;
+        gap: 15px;
         font-family: sans-serif;
-        font-size: 14px;
-        font-weight: bold;
+        font-size: 15px;
     }
 
-    .stat-pill { background: #f0f2f6; padding: 4px 12px; border-radius: 15px; color: #31333F; }
+    /* High-Contrast Stat Pills */
+    .stat-pill { 
+        padding: 6px 16px; 
+        border-radius: 20px; 
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .pill-total { background: #FFFFFF; color: #000000; }
+    .pill-ready { background: #00E676; color: #000000; } /* Neon Green */
+    .pill-progress { background: #FFC107; color: #000000; } /* Bright Yellow */
 
     /* Section Headers */
     .section-header {
         font-family: sans-serif;
-        font-size: 18px;
-        font-weight: 800;
-        color: #555;
-        margin-top: 30px;
+        font-size: 20px;
+        font-weight: 900;
+        margin-top: 35px;
         margin-bottom: 15px;
-        padding-bottom: 5px;
-        border-bottom: 2px solid #eee;
+        padding-bottom: 8px;
         text-transform: uppercase;
         letter-spacing: 1px;
     }
+    
+    /* Custom Header Colors */
+    .header-ready { color: #00E676; border-bottom: 2px solid #00E676; text-shadow: 0 0 10px rgba(0, 230, 118, 0.2); }
+    .header-progress { color: #FFC107; border-bottom: 2px solid #FFC107; text-shadow: 0 0 10px rgba(255, 193, 7, 0.2); }
+    .header-waiting { color: #AAAAAA; border-bottom: 2px solid #444444; }
 
-    /* Guest Card Wrapper (Dark theme to make white text pop) */
+    /* Guest Card Wrapper (Dark theme to make white/bright text pop) */
     .guest-card {
-        background-color: #1E1E1E; /* Dark background */
+        background-color: #1E1E1E; 
         padding: 16px;
         border-radius: 10px;
         margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         font-family: sans-serif;
     }
 
@@ -65,7 +77,7 @@ custom_css = """
         font-size: 20px; 
         font-weight: bold; 
         margin-bottom: 12px; 
-        color: #FFFFFF; /* Changed to White */
+        color: #FFFFFF; 
         letter-spacing: 0.5px;
     }
 
@@ -76,28 +88,33 @@ custom_css = """
         align-items: center;
         justify-content: center;
         font-size: 14px;
-        font-weight: bold;
-        border-right: 2px solid #1E1E1E; /* Matches card background */
+        font-weight: 900; /* Extra bold for readability */
+        border-right: 2px solid #1E1E1E; 
         transition: all 0.3s ease;
     }
     .segment:last-child { border-right: none; }
 
-    /* States */
-    .state-not-yet { background-color: #444444; color: #AAAAAA; } /* Darkened for dark card */
-    .state-done { background-color: #4CAF50; color: white; }
-    .state-done-faded { background-color: #2E7D32; color: #A5D6A7; } 
+    /* STATES */
+    .state-not-yet { background-color: #333333; color: #888888; } 
     
-    /* STARTED STATE (Yellow with black text) */
+    /* DONE / READY STATE (Neon Green with black text) */
+    .state-done { background-color: #00E676; color: #000000; }
+    
+    /* Faded Done (Dark green, pushed to background so active stages pop) */
+    .state-done-faded { background-color: #1B5E20; color: #81C784; } 
+    
+    /* STARTED STATE (Bright Yellow with black text) */
     .state-started { 
-        background-color: #FFC107; /* Bright Yellow/Amber */
-        color: #000000; /* Black text for high contrast against yellow */
+        background-color: #FFC107; 
+        color: #000000; 
         animation: pulse-yellow 1.5s infinite;
         z-index: 10;
     }
     
     /* Special styling for guests who are completely ready */
     .ready-card {
-        border-left: 6px solid #4CAF50;
+        border-left: 6px solid #00E676;
+        box-shadow: 0 0 15px rgba(0, 230, 118, 0.1);
     }
 
     /* Yellow Pulse Animation */
@@ -166,7 +183,7 @@ def render_guest_card(guest, is_ready=False):
     html_bar = f"""
     <div class="guest-card {ready_class}">
         <div class="guest-name">👤 {guest['guest_name']}</div>
-        <div style="display: flex; height: 36px; border-radius: 8px; overflow: hidden; background-color: #333333; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);">
+        <div style="display: flex; height: 38px; border-radius: 8px; overflow: hidden; background-color: #222222; box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);">
             <div class="segment {c_lmw}">{t_lmw}</div>
             <div class="segment {c_demo}">{t_demo}</div>
             <div class="segment {c_vyas}">{t_vyas}</div>
@@ -191,7 +208,7 @@ def display_guest_statuses():
 
     if not active_guests:
         st.markdown(
-            "<div style='text-align: center; color: #757575; margin-top: 50px; font-family: sans-serif;'>"
+            "<div style='text-align: center; color: #AAAAAA; margin-top: 80px; font-family: sans-serif; font-size: 18px;'>"
             "No active guests currently in progress."
             "</div>", 
             unsafe_allow_html=True
@@ -203,12 +220,12 @@ def display_guest_statuses():
     ready_count = sum(1 for g in active_guests if g.get('ready_to_meet_gurudev'))
     in_progress_count = sum(1 for g in active_guests if not g.get('ready_to_meet_gurudev') and (g.get('lmw_status') in ['Started', 'Done'] or g.get('demo_status') in ['Started', 'Done']))
     
-    # Header pills updated to match new colors
+    # Render Sticky Top Header
     st.markdown(f"""
         <div class="sticky-header">
-            <div class="stat-pill">Total: {total}</div>
-            <div class="stat-pill" style="background:#E8F5E9; color:#2E7D32;">Ready: {ready_count}</div>
-            <div class="stat-pill" style="background:#FFF8E1; color:#F57C00;">In Progress: {in_progress_count}</div>
+            <div class="stat-pill pill-total">TOTAL: {total}</div>
+            <div class="stat-pill pill-ready">READY: {ready_count}</div>
+            <div class="stat-pill pill-progress">IN PROGRESS: {in_progress_count}</div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -231,17 +248,17 @@ def display_guest_statuses():
     # --- RENDER SECTIONS ---
     
     if ready_guests:
-        st.markdown('<div class="section-header">🌟 Ready for Vyas</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header header-ready">🌟 Ready for Vyas</div>', unsafe_allow_html=True)
         for guest in ready_guests:
             render_guest_card(guest, is_ready=True)
             
     if in_progress_guests:
-        st.markdown('<div class="section-header">🔄 In Progress</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header header-progress">🔄 In Progress</div>', unsafe_allow_html=True)
         for guest in in_progress_guests:
             render_guest_card(guest)
 
     if waiting_guests:
-        st.markdown('<div class="section-header" style="color:#aaa;">⏳ Waiting (Not Started)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header header-waiting">⏳ Waiting (Not Started)</div>', unsafe_allow_html=True)
         for guest in waiting_guests:
             render_guest_card(guest)
 
