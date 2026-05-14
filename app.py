@@ -6,14 +6,13 @@ from datetime import datetime
 st.set_page_config(page_title="Guest Status", layout="centered", initial_sidebar_state="collapsed")
 
 # --- CUSTOM CSS ---
-# Hides Streamlit chrome, sets up the sticky header, and creates the pulsing animation
 custom_css = """
 <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     .block-container {
-        padding-top: 4rem; /* Room for sticky header */
+        padding-top: 4rem; 
         padding-bottom: 2rem;
     }
     
@@ -35,11 +34,20 @@ custom_css = """
         font-weight: bold;
     }
 
-    .stat-pill {
-        background: #f0f2f6;
-        padding: 4px 12px;
-        border-radius: 15px;
-        color: #31333F;
+    .stat-pill { background: #f0f2f6; padding: 4px 12px; border-radius: 15px; color: #31333F; }
+
+    /* Section Headers */
+    .section-header {
+        font-family: sans-serif;
+        font-size: 18px;
+        font-weight: 800;
+        color: #555;
+        margin-top: 30px;
+        margin-bottom: 15px;
+        padding-bottom: 5px;
+        border-bottom: 2px solid #eee;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
 
     /* Progress Bar Segments */
@@ -53,24 +61,28 @@ custom_css = """
         border-right: 2px solid white;
         transition: all 0.3s ease;
     }
-    .segment:last-child {
-        border-right: none;
-    }
+    .segment:last-child { border-right: none; }
 
     /* States */
     .state-not-yet { background-color: #E0E0E0; color: #757575; }
     .state-done { background-color: #4CAF50; color: white; }
-    .state-done-faded { background-color: #81C784; color: #E8F5E9; } /* Faded green */
+    .state-done-faded { background-color: #81C784; color: #E8F5E9; } 
     .state-started { 
         background-color: #2196F3; 
         color: white; 
         animation: pulse 1.5s infinite;
-        box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7);
+    }
+    
+    /* Special styling for guests who are completely ready */
+    .ready-card {
+        border-left: 5px solid #4CAF50;
+        padding-left: 10px;
+        border-radius: 4px;
     }
 
     @keyframes pulse {
         0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); }
-        70% { box-shadow: 0 0 0 10px rgba(33, 150, 243, 0); }
+        70% { box-shadow: 0 0 0 8px rgba(33, 150, 243, 0); }
         100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); }
     }
 </style>
@@ -80,8 +92,7 @@ st.markdown(custom_css, unsafe_allow_html=True)
 conn = st.connection("supabase", type=SupabaseConnection)
 
 def get_guest_weight(guest):
-    """Calculates sorting weight to push active/ready guests to the top."""
-    if guest.get('ready_to_meet_gurudev'): return 100
+    """Calculates sorting weight to push guests closer to Vyas to the top of their section."""
     demo = guest.get('demo_status', 'Not yet')
     lmw = guest.get('lmw_status', 'Not yet')
     
@@ -121,6 +132,29 @@ def get_stage_data(lmw, demo, ready):
 
     return (c_lmw, t_lmw), (c_demo, t_demo), (c_vyas, t_vyas)
 
+def render_guest_card(guest, is_ready=False):
+    """Generates the HTML for a single guest progress bar."""
+    lmw_val = guest.get('lmw_status', 'Not yet')
+    demo_val = guest.get('demo_status', 'Not yet')
+    ready_val = guest.get('ready_to_meet_gurudev', False)
+    
+    (c_lmw, t_lmw), (c_demo, t_demo), (c_vyas, t_vyas) = get_stage_data(lmw_val, demo_val, ready_val)
+    
+    ready_class = "ready-card" if is_ready else ""
+    
+    html_bar = f"""
+    <div class="{ready_class}" style="margin-bottom: 24px; font-family: sans-serif;">
+        <div style="font-size: 20px; font-weight: bold; margin-bottom: 8px; color: #333;">{guest['guest_name']}</div>
+        <div style="display: flex; height: 36px; border-radius: 8px; overflow: hidden; background-color: #e0e0e0; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
+            <div class="segment {c_lmw}">{t_lmw}</div>
+            <div class="segment {c_demo}">{t_demo}</div>
+            <div class="segment {c_vyas}">{t_vyas}</div>
+        </div>
+    </div>
+    """
+    st.markdown(html_bar, unsafe_allow_html=True)
+
+
 @st.fragment(run_every="10s")
 def display_guest_statuses():
     today_start = f"{datetime.now().strftime('%Y-%m-%d')}T00:00:00"
@@ -143,42 +177,51 @@ def display_guest_statuses():
         )
         return
 
-    # Calculate Aggregates for Header
+    # Calculate Aggregates
     total = len(active_guests)
-    lmw_count = sum(1 for g in active_guests if g.get('lmw_status') == 'Started')
-    demo_count = sum(1 for g in active_guests if g.get('demo_status') == 'Started')
     ready_count = sum(1 for g in active_guests if g.get('ready_to_meet_gurudev'))
+    in_progress_count = sum(1 for g in active_guests if not g.get('ready_to_meet_gurudev') and (g.get('lmw_status') in ['Started', 'Done'] or g.get('demo_status') in ['Started', 'Done']))
+    waiting_count = total - ready_count - in_progress_count
 
     st.markdown(f"""
         <div class="sticky-header">
             <div class="stat-pill">Total: {total}</div>
-            <div class="stat-pill" style="background:#E3F2FD; color:#1976D2;">In LMW: {lmw_count}</div>
-            <div class="stat-pill" style="background:#E3F2FD; color:#1976D2;">In Demo: {demo_count}</div>
             <div class="stat-pill" style="background:#E8F5E9; color:#388E3C;">Ready: {ready_count}</div>
+            <div class="stat-pill" style="background:#E3F2FD; color:#1976D2;">In Progress: {in_progress_count}</div>
         </div>
     """, unsafe_allow_html=True)
 
-    # Sort guests dynamically
-    active_guests.sort(key=get_guest_weight, reverse=True)
+    # --- CATEGORIZE GUESTS ---
+    ready_guests = []
+    in_progress_guests = []
+    waiting_guests = []
 
-    # Render Bars
     for guest in active_guests:
-        lmw_val = guest.get('lmw_status', 'Not yet')
-        demo_val = guest.get('demo_status', 'Not yet')
-        ready_val = guest.get('ready_to_meet_gurudev', False)
-        
-        (c_lmw, t_lmw), (c_demo, t_demo), (c_vyas, t_vyas) = get_stage_data(lmw_val, demo_val, ready_val)
-        
-        html_bar = f"""
-        <div style="margin-bottom: 24px; font-family: sans-serif;">
-            <div style="font-size: 20px; font-weight: bold; margin-bottom: 8px; color: #333;">{guest['guest_name']}</div>
-            <div style="display: flex; height: 36px; border-radius: 8px; overflow: hidden; background-color: #e0e0e0; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
-                <div class="segment {c_lmw}">{t_lmw}</div>
-                <div class="segment {c_demo}">{t_demo}</div>
-                <div class="segment {c_vyas}">{t_vyas}</div>
-            </div>
-        </div>
-        """
-        st.markdown(html_bar, unsafe_allow_html=True)
+        if guest.get('ready_to_meet_gurudev'):
+            ready_guests.append(guest)
+        elif guest.get('lmw_status') in ['Started', 'Done'] or guest.get('demo_status') in ['Started', 'Done']:
+            in_progress_guests.append(guest)
+        else:
+            waiting_guests.append(guest)
+
+    # Sort 'In Progress' queue so those closest to finishing are at the top
+    in_progress_guests.sort(key=get_guest_weight, reverse=True)
+
+    # --- RENDER SECTIONS ---
+    
+    if ready_guests:
+        st.markdown('<div class="section-header">🌟 Ready for Vyas</div>', unsafe_allow_html=True)
+        for guest in ready_guests:
+            render_guest_card(guest, is_ready=True)
+            
+    if in_progress_guests:
+        st.markdown('<div class="section-header">🔄 In Progress</div>', unsafe_allow_html=True)
+        for guest in in_progress_guests:
+            render_guest_card(guest)
+
+    if waiting_guests:
+        st.markdown('<div class="section-header" style="color:#aaa;">⏳ Waiting (Not Started)</div>', unsafe_allow_html=True)
+        for guest in waiting_guests:
+            render_guest_card(guest)
 
 display_guest_statuses()
