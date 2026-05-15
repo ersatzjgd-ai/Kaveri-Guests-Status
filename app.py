@@ -22,7 +22,7 @@ custom_css = """
         top: 0;
         left: 0;
         width: 100%;
-        background-color: rgba(30, 30, 30, 0.95); /* Darkened for better contrast with bright pills */
+        background-color: rgba(30, 30, 30, 0.95);
         box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         z-index: 1000;
         padding: 12px 0;
@@ -42,8 +42,8 @@ custom_css = """
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
     .pill-total { background: #FFFFFF; color: #000000; }
-    .pill-ready { background: #00E676; color: #000000; } /* Neon Green */
-    .pill-progress { background: #FFC107; color: #000000; } /* Bright Yellow */
+    .pill-ready { background: #00E676; color: #000000; } 
+    .pill-progress { background: #FFC107; color: #000000; } 
 
     /* Section Headers */
     .section-header {
@@ -62,7 +62,7 @@ custom_css = """
     .header-progress { color: #FFC107; border-bottom: 2px solid #FFC107; text-shadow: 0 0 10px rgba(255, 193, 7, 0.2); }
     .header-waiting { color: #AAAAAA; border-bottom: 2px solid #444444; }
 
-    /* Guest Card Wrapper (Dark theme to make white/bright text pop) */
+    /* Guest Card Wrapper */
     .guest-card {
         background-color: #1E1E1E; 
         padding: 16px;
@@ -88,7 +88,7 @@ custom_css = """
         align-items: center;
         justify-content: center;
         font-size: 14px;
-        font-weight: 900; /* Extra bold for readability */
+        font-weight: 900; 
         border-right: 2px solid #1E1E1E; 
         transition: all 0.3s ease;
     }
@@ -96,14 +96,8 @@ custom_css = """
 
     /* STATES */
     .state-not-yet { background-color: #333333; color: #888888; } 
-    
-    /* DONE / READY STATE (Neon Green with black text) */
     .state-done { background-color: #00E676; color: #000000; }
-    
-    /* Faded Done (Dark green, pushed to background so active stages pop) */
     .state-done-faded { background-color: #1B5E20; color: #81C784; } 
-    
-    /* STARTED STATE (Bright Yellow with black text) */
     .state-started { 
         background-color: #FFC107; 
         color: #000000; 
@@ -175,7 +169,7 @@ def render_guest_card(guest, is_ready=False):
     lmw_val = guest.get('lmw_status', 'Not yet')
     demo_val = guest.get('demo_status', 'Not yet')
     ready_val = guest.get('ready_to_meet_gurudev', False)
-    lounge_val = guest.get('lounge', 'Unknown') # Fetch the lounge value
+    lounge_val = guest.get('lounge', 'Unknown') 
     
     (c_lmw, t_lmw), (c_demo, t_demo), (c_vyas, t_vyas) = get_stage_data(lmw_val, demo_val, ready_val)
     
@@ -198,11 +192,12 @@ def render_guest_card(guest, is_ready=False):
 def display_guest_statuses():
     today_start = f"{datetime.now().strftime('%Y-%m-%d')}T00:00:00"
     
-    # Added 'lounge' to the select statement here
+    # ADDED: .eq("met_gurudev", False) so they clear from the board instantly!
     res = conn.table("guests") \
         .select("guest_name, lounge, lmw_status, demo_status, ready_to_meet_gurudev") \
         .eq("is_active", True) \
         .eq("jai_gurudev", False) \
+        .eq("met_gurudev", False) \
         .gte("created_at", today_start) \
         .execute()
         
