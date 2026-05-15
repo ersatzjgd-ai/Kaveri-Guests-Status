@@ -175,6 +175,7 @@ def render_guest_card(guest, is_ready=False):
     lmw_val = guest.get('lmw_status', 'Not yet')
     demo_val = guest.get('demo_status', 'Not yet')
     ready_val = guest.get('ready_to_meet_gurudev', False)
+    lounge_val = guest.get('lounge', 'Unknown') # Fetch the lounge value
     
     (c_lmw, t_lmw), (c_demo, t_demo), (c_vyas, t_vyas) = get_stage_data(lmw_val, demo_val, ready_val)
     
@@ -182,7 +183,7 @@ def render_guest_card(guest, is_ready=False):
     
     html_bar = f"""
     <div class="guest-card {ready_class}">
-        <div class="guest-name">👤 {guest['guest_name']}</div>
+        <div class="guest-name">👤 {lounge_val} - {guest['guest_name']}</div>
         <div style="display: flex; height: 38px; border-radius: 8px; overflow: hidden; background-color: #222222; box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);">
             <div class="segment {c_lmw}">{t_lmw}</div>
             <div class="segment {c_demo}">{t_demo}</div>
@@ -197,8 +198,9 @@ def render_guest_card(guest, is_ready=False):
 def display_guest_statuses():
     today_start = f"{datetime.now().strftime('%Y-%m-%d')}T00:00:00"
     
+    # Added 'lounge' to the select statement here
     res = conn.table("guests") \
-        .select("guest_name, lmw_status, demo_status, ready_to_meet_gurudev") \
+        .select("guest_name, lounge, lmw_status, demo_status, ready_to_meet_gurudev") \
         .eq("is_active", True) \
         .eq("jai_gurudev", False) \
         .gte("created_at", today_start) \
